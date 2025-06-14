@@ -1,0 +1,546 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for platform users
+model User {
+  id                String   @id @default(cuid())
+  walletAddress     String   @unique
+  email             String?  @unique
+  name              String?
+  avatar            String?
+  bio               String?
+  location          String?
+  isVerified        Boolean  @default(false)
+  isAdmin           Boolean  @default(false)
+  role              UserRole @default(USER)
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastLoginAt       DateTime?
+  
+  // Statistics
+  totalDonated      Float    @default(0)
+  totalRequests     Int      @default(0)
+  reputation        Int      @default(0)
+  
+  // Relationships
+  charityRequests   CharityRequest[]
+  halalProjects     HalalProject[]
+  donations         Donation[]
+  votes             Vote[]
+  notifications     Notification[]
+  documents         Document[]
+  comments          Comment[]
+  
+  @@map("users")
+}
+
+// Charity Request model
+model CharityRequest {
+  id                String            @id @default(cuid())
+  title             String
+  description       String
+  longDescription   String?
+  category          CharityCategory
+  targetAmount      Float
+  currentAmount     Float             @default(0)
+  urgency          UrgencyLevel
+  deadline          DateTime
+  
+  // Beneficiary information
+  beneficiaryName   String
+  beneficiaryLocation String
+  beneficiaryPhone  String?
+  beneficiaryEmail  String?
+  
+  // Request details
+  personalStory     String
+  publicDescription String
+  expectedImpact    String
+  additionalNotes   String?
+  
+  // Status and verification
+  status            RequestStatus     @default(PENDING)
+  isVerified        Boolean           @default(false)
+  isPublic          Boolean           @default(true)
+  isFeatured        Boolean           @default(false)
+  
+  // Relationships
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  donations         Donation[]
+  documents         Document[]
+  comments          Comment[]
+  
+  // Admin fields
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  rejectionReason   String?
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("charity_requests")
+}
+
+// Halal Project model
+model HalalProject {
+  id                String            @id @default(cuid())
+  title             String
+  description       String
+  longDescription   String
+  category          ProjectCategory
+  totalFunding      Float
+  currentFunding    Float             @default(0)
+  location          String
+  
+  // Project details
+  estimatedCompletion DateTime?
+  actualCompletion  DateTime?
+  
+  // Islamic compliance
+  halalCertification Boolean          @default(false)
+  noInterest        Boolean          @default(true)
+  communityBenefit  Boolean          @default(true)
+  transparentFunding Boolean         @default(true)
+  
+  // Status and metrics
+  status            ProjectStatus     @default(ACTIVE)
+  communityRating   Float             @default(0)
+  supporters        Int               @default(0)
+  isVerified        Boolean           @default(false)
+  isFeatured        Boolean           @default(false)
+  
+  // Relationships
+  organizerId       String
+  organizer         User              @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  stages            ProjectStage[]
+  donations         Donation[]
+  votes             Vote[]
+  documents         Document[]
+  updates           ProjectUpdate[]
+  comments          Comment[]
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("halal_projects")
+}
+
+// Project Stage model
+model ProjectStage {
+  id                String            @id @default(cuid())
+  title             String
+  description       String
+  targetAmount      Float
+  currentAmount     Float             @default(0)
+  orderIndex        Int
+  
+  // Status
+  isCompleted       Boolean           @default(false)
+  isCurrent         Boolean           @default(false)
+  completedAt       DateTime?
+  
+  // Milestones
+  milestones        Json?             // Array of milestone strings
+  documentsRequired Json?             // Array of required document types
+  
+  // Community approval
+  votesFor          Int               @default(0)
+  votesAgainst      Int               @default(0)
+  totalVoters       Int               @default(0)
+  isApproved        Boolean           @default(false)
+  
+  // Relationships
+  projectId         String
+  project           HalalProject      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  votes             Vote[]
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("project_stages")
+}
+
+// Donation model
+model Donation {
+  id                String            @id @default(cuid())
+  amount            Float
+  currency          String            @default("SOL")
+  
+  // Blockchain details
+  transactionHash   String?           @unique
+  blockchainNetwork String            @default("solana")
+  fromWallet        String
+  toWallet          String
+  
+  // Donation details
+  message           String?
+  isAnonymous       Boolean           @default(false)
+  isRecurring       Boolean           @default(false)
+  
+  // Status
+  status            DonationStatus    @default(PENDING)
+  confirmedAt       DateTime?
+  
+  // Relationships - polymorphic
+  donorId           String
+  donor             User              @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  
+  // For charity requests
+  charityRequestId  String?
+  charityRequest    CharityRequest?   @relation(fields: [charityRequestId], references: [id])
+  
+  // For halal projects
+  halalProjectId    String?
+  halalProject      HalalProject?     @relation(fields: [halalProjectId], references: [id])
+  
+  // For zakat distribution
+  zakatDistributionId String?
+  zakatDistribution ZakatDistribution? @relation(fields: [zakatDistributionId], references: [id])
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("donations")
+}
+
+// Zakat Distribution model
+model ZakatDistribution {
+  id                String            @id @default(cuid())
+  title             String
+  description       String
+  amount            Float
+  recipients        Int
+  
+  // Status and voting
+  status            DistributionStatus @default(PENDING)
+  votesFor          Int               @default(0)
+  votesAgainst      Int               @default(0)
+  totalVoters       Int               @default(0)
+  isApproved        Boolean           @default(false)
+  
+  // Distribution details
+  distributionDate  DateTime?
+  actualAmount      Float?
+  actualRecipients  Int?
+  
+  // Relationships
+  createdBy         String
+  donations         Donation[]
+  votes             Vote[]
+  recipients        ZakatRecipient[]
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("zakat_distributions")
+}
+
+// Zakat Recipient model
+model ZakatRecipient {
+  id                String            @id @default(cuid())
+  name              String
+  walletAddress     String
+  amount            Float
+  category          ZakatCategory
+  
+  // Verification
+  isVerified        Boolean           @default(false)
+  verificationNotes String?
+  
+  // Status
+  status            RecipientStatus   @default(PENDING)
+  distributedAt     DateTime?
+  
+  // Relationships
+  distributionId    String
+  distribution      ZakatDistribution @relation(fields: [distributionId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("zakat_recipients")
+}
+
+// Vote model
+model Vote {
+  id                String            @id @default(cuid())
+  voteType          VoteType
+  
+  // Voting power (could be based on stake, reputation, etc.)
+  weight            Float             @default(1)
+  comment           String?
+  
+  // Relationships - polymorphic voting
+  voterId           String
+  voter             User              @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  
+  // For project stages
+  projectStageId    String?
+  projectStage      ProjectStage?     @relation(fields: [projectStageId], references: [id])
+  
+  // For halal projects
+  halalProjectId    String?
+  halalProject      HalalProject?     @relation(fields: [halalProjectId], references: [id])
+  
+  // For zakat distributions
+  zakatDistributionId String?
+  zakatDistribution ZakatDistribution? @relation(fields: [zakatDistributionId], references: [id])
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Ensure one vote per user per item
+  @@unique([voterId, projectStageId])
+  @@unique([voterId, halalProjectId])
+  @@unique([voterId, zakatDistributionId])
+  @@map("votes")
+}
+
+// Document model
+model Document {
+  id                String            @id @default(cuid())
+  filename          String
+  originalName      String
+  mimeType          String
+  size              Int
+  url               String
+  
+  // Document details
+  documentType      DocumentType
+  description       String?
+  isPublic          Boolean           @default(false)
+  isVerified        Boolean           @default(false)
+  
+  // Relationships - polymorphic
+  uploadedById      String
+  uploadedBy        User              @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  
+  // For charity requests
+  charityRequestId  String?
+  charityRequest    CharityRequest?   @relation(fields: [charityRequestId], references: [id])
+  
+  // For halal projects
+  halalProjectId    String?
+  halalProject      HalalProject?     @relation(fields: [halalProjectId], references: [id])
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("documents")
+}
+
+// Project Update model
+model ProjectUpdate {
+  id                String            @id @default(cuid())
+  title             String
+  content           String
+  updateType        UpdateType
+  
+  // Media
+  images            Json?             // Array of image URLs
+  
+  // Relationships
+  projectId         String
+  project           HalalProject      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("project_updates")
+}
+
+// Comment model
+model Comment {
+  id                String            @id @default(cuid())
+  content           String
+  isPublic          Boolean           @default(true)
+  
+  // Relationships - polymorphic
+  authorId          String
+  author            User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // For charity requests
+  charityRequestId  String?
+  charityRequest    CharityRequest?   @relation(fields: [charityRequestId], references: [id])
+  
+  // For halal projects
+  halalProjectId    String?
+  halalProject      HalalProject?     @relation(fields: [halalProjectId], references: [id])
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("comments")
+}
+
+// Notification model
+model Notification {
+  id                String            @id @default(cuid())
+  title             String
+  message           String
+  type              NotificationType
+  
+  // Status
+  isRead            Boolean           @default(false)
+  readAt            DateTime?
+  
+  // Action data
+  actionUrl         String?
+  actionData        Json?
+  
+  // Relationships
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("notifications")
+}
+
+// Enums
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum CharityCategory {
+  MEDICAL
+  EDUCATION
+  HOUSING
+  FOOD
+  DISASTER
+  ORPHAN
+  WIDOW
+  MOSQUE
+  OTHER
+}
+
+enum ProjectCategory {
+  MOSQUE
+  SCHOOL
+  HOSPITAL
+  ORPHANAGE
+  WATER
+  HOUSING
+  BUSINESS
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RequestStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  ACTIVE
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum DonationStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REFUNDED
+}
+
+enum DistributionStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum RecipientStatus {
+  PENDING
+  VERIFIED
+  DISTRIBUTED
+  REJECTED
+}
+
+enum ZakatCategory {
+  POOR          // الفقراء - Al-Fuqara
+  NEEDY         // المساكين - Al-Masakin
+  COLLECTORS    // العاملين عليها - Al-Amilin Alayha
+  NEW_MUSLIMS   // المؤلفة قلوبهم - Al-Muallafah Qulubuhum
+  SLAVES        // في الرقاب - Fi ar-Riqab
+  DEBTORS       // الغارمين - Al-Gharimin
+  FISABILILLAH  // في سبيل الله - Fi Sabilillah
+  WAYFARER      // ابن السبيل - Ibn as-Sabil
+}
+
+enum VoteType {
+  FOR
+  AGAINST
+  ABSTAIN
+}
+
+enum DocumentType {
+  MEDICAL_REPORT
+  BILL
+  CERTIFICATE
+  ID_DOCUMENT
+  PROOF_OF_NEED
+  PROJECT_PLAN
+  BUDGET
+  PROGRESS_REPORT
+  OTHER
+}
+
+enum UpdateType {
+  PROGRESS
+  MILESTONE
+  COMPLETION
+  ISSUE
+  ANNOUNCEMENT
+}
+
+enum NotificationType {
+  DONATION_RECEIVED
+  DONATION_CONFIRMED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+  PROJECT_UPDATE
+  VOTE_REMINDER
+  ZAKAT_DISTRIBUTION
+  SYSTEM_ANNOUNCEMENT
+}

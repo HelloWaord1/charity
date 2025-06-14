@@ -16,6 +16,11 @@ import {
   getMint
 } from '@solana/spl-token';
 
+// Charity Token Configuration
+export const CHARITY_TOKEN_MINT = new PublicKey(
+  process.env.NEXT_PUBLIC_CHARITY_TOKEN_MINT || 'So11111111111111111111111111111111111111112'
+);
+
 // Utility functions
 export function isValidPublicKey(publicKey: string): boolean {
   if (!publicKey || publicKey.length === 0) {
