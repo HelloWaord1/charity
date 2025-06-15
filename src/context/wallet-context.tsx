@@ -1,16 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-// Temporarily comment out problematic Solana imports
-// import { Connection, PublicKey } from '@solana/web3.js';
-// import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-// import { 
-//   CHARITY_TOKEN_MINT, 
-//   getBalance, 
-//   getTokenBalance,
-//   isValidPublicKey 
-// } from '@/lib/solana';
-import { mockWalletAddress, isValidPublicKey } from '@/lib/solana-temp';
+import React, { createContext, useContext, useState } from 'react';
 
 interface WalletState {
   isConnected: boolean;
@@ -39,21 +29,20 @@ export function CustomWalletProvider({ children }: { children: React.ReactNode }
     error: null,
   });
 
-  // Mock wallet connection for demonstration
+  // Mock wallet functions for demo
   const connect = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // Simulate wallet connection
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const mockAddress = mockWalletAddress();
+      const mockAddress = 'So11111111111111111111111111111111111111112';
       setState(prev => ({
         ...prev,
         isConnected: true,
         publicKey: mockAddress,
-        balance: Math.random() * 10, // Mock SOL balance
-        tokenBalance: Math.random() * 1000, // Mock token balance
+        balance: 5.23,
+        tokenBalance: 1250.50,
         loading: false,
       }));
     } catch (error) {
@@ -77,18 +66,17 @@ export function CustomWalletProvider({ children }: { children: React.ReactNode }
   };
 
   const refreshBalances = async () => {
-    if (!state.isConnected || !state.publicKey) return;
+    if (!state.isConnected) return;
 
     setState(prev => ({ ...prev, loading: true }));
     
     try {
-      // Mock balance refresh
       await new Promise(resolve => setTimeout(resolve, 500));
       
       setState(prev => ({
         ...prev,
-        balance: Math.random() * 10,
-        tokenBalance: Math.random() * 1000,
+        balance: 5.23 + (Math.random() - 0.5),
+        tokenBalance: 1250.50 + (Math.random() - 0.5) * 100,
         loading: false,
       }));
     } catch (error) {
@@ -99,14 +87,6 @@ export function CustomWalletProvider({ children }: { children: React.ReactNode }
       }));
     }
   };
-
-  // Auto-refresh balances every 30 seconds
-  useEffect(() => {
-    if (!state.isConnected) return;
-
-    const interval = setInterval(refreshBalances, 30000);
-    return () => clearInterval(interval);
-  }, [state.isConnected]);
 
   const value: WalletContextType = {
     ...state,

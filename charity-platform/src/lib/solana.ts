@@ -23,7 +23,7 @@ export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT || clusterApiUr
 
 // Charity Token Configuration
 export const CHARITY_TOKEN_MINT = new PublicKey(
-  process.env.NEXT_PUBLIC_CHARITY_TOKEN_MINT || 'ChAr1TyT0k3nM1nT1234567890123456789012345678'
+  process.env.NEXT_PUBLIC_CHARITY_TOKEN_MINT || 'So11111111111111111111111111111111111111112'
 );
 
 export const ZAKAT_POOL_ADDRESS = new PublicKey(
