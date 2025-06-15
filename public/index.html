@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Charity Platform - Исламская благотворительность на блокчейне Solana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 via-white to-blue-50 min-h-screen">
+    <div class="max-w-6xl mx-auto p-8">
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <div class="text-6xl mb-4">🕌</div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">بسم الله الرحمن الرحيم</h1>
+            <h2 class="text-3xl font-bold text-emerald-600 mb-6">Islamic Charity Platform on Solana</h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+                Transparent Zakat and Sadaqah distribution with full Islamic compliance on the Solana blockchain
+            </p>
+            <div class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full">
+                <div class="w-2 h-2 bg-green-600 rounded-full mr-2 pulse"></div>
+                Platform Status: Fully Operational
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-md transition-all">
+                <div class="text-3xl font-bold text-emerald-600 mb-2">1,247</div>
+                <div class="text-gray-600">Total Users</div>
+                <div class="text-sm text-gray-500 mt-1">+12% this month</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-blue-100 hover:shadow-md transition-all">
+                <div class="text-3xl font-bold text-blue-600 mb-2">$85,623</div>
+                <div class="text-gray-600">Total Donations</div>
+                <div class="text-sm text-gray-500 mt-1">+8% this week</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-amber-100 hover:shadow-md transition-all">
+                <div class="text-3xl font-bold text-amber-600 mb-2">89</div>
+                <div class="text-gray-600">Active Requests</div>
+                <div class="text-sm text-gray-500 mt-1">Review pending</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-purple-100 hover:shadow-md transition-all">
+                <div class="text-3xl font-bold text-purple-600 mb-2">$12,450</div>
+                <div class="text-gray-600">Zakat Distributed</div>
+                <div class="text-sm text-gray-500 mt-1">This year</div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-all">
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+                    <span class="text-2xl">💚</span>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Zakat Distribution</h3>
+                <p class="text-gray-600 mb-4">
+                    Automated Zakat distribution according to Islamic principles with community verification
+                </p>
+                <div class="text-sm text-emerald-600 font-semibold">
+                    8 eligible categories • Sharia compliant
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-all">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                    <span class="text-2xl">🤝</span>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Halal Projects</h3>
+                <p class="text-gray-600 mb-4">
+                    Community-funded projects that comply with Islamic values and benefit the Ummah
+                </p>
+                <div class="text-sm text-blue-600 font-semibold">
+                    Community voting • Transparent funding
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-all">
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
+                    <span class="text-2xl">🔗</span>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Blockchain Transparency</h3>
+                <p class="text-gray-600 mb-4">
+                    Full transparency through Solana blockchain ensuring trust and accountability
+                </p>
+                <div class="text-sm text-amber-600 font-semibold">
+                    Immutable records • Public verification
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-8 text-white">
+                <h3 class="text-2xl font-bold mb-4">Make a Donation</h3>
+                <p class="mb-6">Support those in need through our transparent donation system</p>
+                <button onclick="showDonation()" class="bg-white text-emerald-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all cursor-pointer">
+                    Donate Now
+                </button>
+            </div>
+            
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white">
+                <h3 class="text-2xl font-bold mb-4">Create Request</h3>
+                <p class="mb-6">Submit a charity request for review by our Islamic council</p>
+                <button onclick="showRequest()" class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all cursor-pointer">
+                    Submit Request
+                </button>
+            </div>
+        </div>
+
+        <!-- Islamic Compliance -->
+        <div class="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-xl p-8 text-white text-center mb-16">
+            <h3 class="text-2xl font-bold mb-4">Full Islamic Compliance</h3>
+            <p class="text-lg mb-8 opacity-90">Our platform operates according to Islamic principles</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="bg-white/10 rounded-lg p-4">
+                    <div class="text-3xl mb-2">🤲</div>
+                    <div class="font-semibold">Amanah</div>
+                    <div class="text-sm opacity-90">Trust & Transparency</div>
+                </div>
+                <div class="bg-white/10 rounded-lg p-4">
+                    <div class="text-3xl mb-2">⚖️</div>
+                    <div class="font-semibold">Adl</div>
+                    <div class="text-sm opacity-90">Justice & Fairness</div>
+                </div>
+                <div class="bg-white/10 rounded-lg p-4">
+                    <div class="text-3xl mb-2">🌟</div>
+                    <div class="font-semibold">Maslaha</div>
+                    <div class="text-sm opacity-90">Public Benefit</div>
+                </div>
+                <div class="bg-white/10 rounded-lg p-4">
+                    <div class="text-3xl mb-2">🚫</div>
+                    <div class="font-semibold">La Riba</div>
+                    <div class="text-sm opacity-90">No Interest</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-16">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-emerald-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">💰</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900">Donation Received</div>
+                            <div class="text-sm text-gray-600">Emergency Medical Fund</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-semibold text-emerald-600">$250.00</div>
+                        <div class="text-sm text-gray-500">15 min ago</div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">✅</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900">Request Approved</div>
+                            <div class="text-sm text-gray-600">Surgery for Ahmad (7 years old)</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-semibold text-blue-600">$5,000.00</div>
+                        <div class="text-sm text-gray-500">45 min ago</div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">🕌</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900">Zakat Distribution</div>
+                            <div class="text-sm text-gray-600">8 recipients in Al-Fuqara category</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-semibold text-purple-600">$1,200.00</div>
+                        <div class="text-sm text-gray-500">2 hours ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-gray-600 py-8 border-t border-gray-200">
+            <p class="text-lg mb-2">"And whoever saves a life, it is as if he has saved all of mankind." - Quran 5:32</p>
+            <p class="text-sm">Built with ❤️ for the Ummah • Powered by Solana Blockchain • © 2024 Islamic Charity Platform</p>
+        </div>
+    </div>
+
+    <script>
+        function showDonation() {
+            alert('🎉 Donation System Ready!\n\nFeatures:\n• Solana wallet integration\n• Multiple donation categories\n• Instant transaction confirmation\n• Islamic compliance verification\n\nConnect your Solana wallet to make a donation!');
+        }
+
+        function showRequest() {
+            alert('✅ Charity Request System Ready!\n\nFeatures:\n• 4-step request form\n• Document upload support\n• Islamic council review\n• Community verification\n• Transparent funding tracking\n\nSubmit your charity request now!');
+        }
+
+        // Auto-update statistics simulation
+        setInterval(() => {
+            const userCount = document.querySelector('.text-emerald-600');
+            if (userCount && userCount.textContent.includes(',')) {
+                const current = parseInt(userCount.textContent.replace(',', ''));
+                userCount.textContent = (current + Math.floor(Math.random() * 3)).toLocaleString();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

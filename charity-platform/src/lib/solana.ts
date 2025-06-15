@@ -1,363 +1,228 @@
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-  SystemProgram,
-  LAMPORTS_PER_SOL,
-  sendAndConfirmTransaction,
-  Keypair,
-  clusterApiUrl,
-} from '@solana/web3.js';
-import {
-  createTransferInstruction,
-  getAssociatedTokenAddress,
-  createAssociatedTokenAccountInstruction,
-  getAccount,
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
-// Solana Configuration
-export const SOLANA_NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
-export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT || clusterApiUrl(SOLANA_NETWORK as any);
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
-// Charity Token Configuration
-export const CHARITY_TOKEN_MINT = new PublicKey(
-  process.env.NEXT_PUBLIC_CHARITY_TOKEN_MINT || 'So11111111111111111111111111111111111111112'
-);
+// Format currency values
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount);
+}
 
-export const ZAKAT_POOL_ADDRESS = new PublicKey(
-  process.env.NEXT_PUBLIC_ZAKAT_POOL_ADDRESS || 'Zak4tP001Add7355123456789012345678901234567'
-);
-
-// Create Solana connection
-export const connection = new Connection(RPC_ENDPOINT, 'confirmed');
-
-// Utility Functions
-export const formatLamports = (lamports: number): string => {
-  return (lamports / LAMPORTS_PER_SOL).toFixed(4);
-};
-
-export const parseTokenAmount = (amount: string, decimals: number): number => {
-  return parseFloat(amount) * Math.pow(10, decimals);
-};
-
-export const formatTokenAmount = (amount: number, decimals: number): string => {
-  return (amount / Math.pow(10, decimals)).toFixed(decimals === 9 ? 4 : 2);
-};
-
-// Wallet Functions
-export const getWalletBalance = async (publicKey: PublicKey): Promise<number> => {
-  try {
-    const balance = await connection.getBalance(publicKey);
-    return balance;
-  } catch (error) {
-    console.error('Error getting wallet balance:', error);
-    throw error;
+// Format numbers with appropriate suffixes
+export function formatNumber(num: number): string {
+  if (num >= 1e9) {
+    return (num / 1e9).toFixed(1) + 'B';
   }
-};
-
-export const getTokenBalance = async (
-  walletAddress: PublicKey,
-  tokenMint: PublicKey
-): Promise<number> => {
-  try {
-    const tokenAccount = await getAssociatedTokenAddress(tokenMint, walletAddress);
-    const account = await getAccount(connection, tokenAccount);
-    return Number(account.amount);
-  } catch (error) {
-    console.error('Error getting token balance:', error);
-    return 0;
+  if (num >= 1e6) {
+    return (num / 1e6).toFixed(1) + 'M';
   }
-};
-
-export const getCharityTokenBalance = async (walletAddress: PublicKey): Promise<number> => {
-  return getTokenBalance(walletAddress, CHARITY_TOKEN_MINT);
-};
-
-// Transaction Functions
-export const createSolTransferTransaction = async (
-  from: PublicKey,
-  to: PublicKey,
-  amount: number
-): Promise<Transaction> => {
-  const transaction = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: from,
-      toPubkey: to,
-      lamports: amount,
-    })
-  );
-  
-  const { blockhash } = await connection.getLatestBlockhash();
-  transaction.recentBlockhash = blockhash;
-  transaction.feePayer = from;
-  
-  return transaction;
-};
-
-export const createTokenTransferTransaction = async (
-  from: PublicKey,
-  to: PublicKey,
-  tokenMint: PublicKey,
-  amount: number,
-  decimals: number = 9
-): Promise<Transaction> => {
-  const transaction = new Transaction();
-  
-  const fromTokenAccount = await getAssociatedTokenAddress(tokenMint, from);
-  const toTokenAccount = await getAssociatedTokenAddress(tokenMint, to);
-  
-  // Check if destination token account exists
-  try {
-    await getAccount(connection, toTokenAccount);
-  } catch (error) {
-    // Create associated token account if it doesn't exist
-    transaction.add(
-      createAssociatedTokenAccountInstruction(
-        from, // payer
-        toTokenAccount, // associated token account
-        to, // owner
-        tokenMint // mint
-      )
-    );
+  if (num >= 1e3) {
+    return (num / 1e3).toFixed(1) + 'K';
   }
-  
-  // Add transfer instruction
-  transaction.add(
-    createTransferInstruction(
-      fromTokenAccount,
-      toTokenAccount,
-      from,
-      amount * Math.pow(10, decimals)
-    )
-  );
-  
-  const { blockhash } = await connection.getLatestBlockhash();
-  transaction.recentBlockhash = blockhash;
-  transaction.feePayer = from;
-  
-  return transaction;
-};
+  return num.toString();
+}
 
-export const createCharityTokenTransferTransaction = async (
-  from: PublicKey,
-  to: PublicKey,
-  amount: number
-): Promise<Transaction> => {
-  return createTokenTransferTransaction(from, to, CHARITY_TOKEN_MINT, amount, 9);
-};
+// Format date to locale string
+export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    ...options,
+  });
+}
 
-// Donation Functions
-export const createDonationTransaction = async (
-  donor: PublicKey,
-  recipient: PublicKey,
-  amount: number,
-  isCharityToken: boolean = true
-): Promise<Transaction> => {
-  if (isCharityToken) {
-    return createCharityTokenTransferTransaction(donor, recipient, amount);
-  } else {
-    return createSolTransferTransaction(donor, recipient, amount * LAMPORTS_PER_SOL);
-  }
-};
+// Format time ago
+export function formatTimeAgo(date: Date | string): string {
+  const now = new Date();
+  const target = typeof date === 'string' ? new Date(date) : date;
+  const diffInSeconds = Math.floor((now.getTime() - target.getTime()) / 1000);
 
-// Zakat Pool Functions
-export const getZakatPoolBalance = async (): Promise<number> => {
-  try {
-    const balance = await getCharityTokenBalance(ZAKAT_POOL_ADDRESS);
-    return balance;
-  } catch (error) {
-    console.error('Error getting Zakat pool balance:', error);
-    return 0;
-  }
-};
+  const intervals = [
+    { label: 'year', seconds: 31536000 },
+    { label: 'month', seconds: 2592000 },
+    { label: 'week', seconds: 604800 },
+    { label: 'day', seconds: 86400 },
+    { label: 'hour', seconds: 3600 },
+    { label: 'minute', seconds: 60 },
+    { label: 'second', seconds: 1 },
+  ];
 
-export const createZakatDistributionTransaction = async (
-  authority: PublicKey,
-  recipient: PublicKey,
-  amount: number
-): Promise<Transaction> => {
-  return createCharityTokenTransferTransaction(ZAKAT_POOL_ADDRESS, recipient, amount);
-};
-
-// Transaction Confirmation
-export const confirmTransaction = async (
-  signature: string,
-  commitment: 'processed' | 'confirmed' | 'finalized' = 'confirmed'
-): Promise<boolean> => {
-  try {
-    const result = await connection.confirmTransaction(signature, commitment);
-    return !result.value.err;
-  } catch (error) {
-    console.error('Error confirming transaction:', error);
-    return false;
-  }
-};
-
-export const waitForConfirmation = async (
-  signature: string,
-  maxRetries: number = 30,
-  delayMs: number = 1000
-): Promise<boolean> => {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const confirmed = await confirmTransaction(signature);
-      if (confirmed) return true;
-      
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-    } catch (error) {
-      console.error(`Confirmation attempt ${i + 1} failed:`, error);
+  for (const interval of intervals) {
+    const count = Math.floor(diffInSeconds / interval.seconds);
+    if (count >= 1) {
+      return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
     }
   }
-  return false;
-};
 
-// Account Information
-export const getAccountInfo = async (publicKey: PublicKey) => {
-  try {
-    const accountInfo = await connection.getAccountInfo(publicKey);
-    return accountInfo;
-  } catch (error) {
-    console.error('Error getting account info:', error);
-    return null;
+  return 'just now';
+}
+
+// Calculate percentage
+export function calculatePercentage(value: number, total: number): number {
+  if (total === 0) return 0;
+  return Math.round((value / total) * 100);
+}
+
+// Generate random ID
+export function generateId(length: number = 8): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-};
+  return result;
+}
 
-export const isValidPublicKey = (address: string): boolean => {
+// Truncate string
+export function truncateString(str: string, length: number = 50): string {
+  if (str.length <= length) return str;
+  return str.substring(0, length) + '...';
+}
+
+// Validate email
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Validate URL
+export function isValidUrl(url: string): boolean {
   try {
-    new PublicKey(address);
+    new URL(url);
     return true;
   } catch {
     return false;
   }
-};
+}
 
-// Transaction History
-export const getTransactionHistory = async (
-  publicKey: PublicKey,
-  limit: number = 10
-): Promise<any[]> => {
+// Sleep utility
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Debounce function
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+// Copy to clipboard
+export async function copyToClipboard(text: string): Promise<boolean> {
   try {
-    const signatures = await connection.getSignaturesForAddress(publicKey, { limit });
-    const transactions = await Promise.all(
-      signatures.map(async (sig) => {
-        const tx = await connection.getTransaction(sig.signature);
-        return {
-          ...tx,
-          signature: sig.signature,
-          blockTime: sig.blockTime,
-        };
-      })
-    );
-    return transactions.filter(tx => tx !== null);
-  } catch (error) {
-    console.error('Error getting transaction history:', error);
-    return [];
-  }
-};
-
-// Token Information
-export const getTokenSupply = async (tokenMint: PublicKey): Promise<number> => {
-  try {
-    const supply = await connection.getTokenSupply(tokenMint);
-    return Number(supply.value.amount);
-  } catch (error) {
-    console.error('Error getting token supply:', error);
-    return 0;
-  }
-};
-
-export const getCharityTokenSupply = async (): Promise<number> => {
-  return getTokenSupply(CHARITY_TOKEN_MINT);
-};
-
-// Program Interaction
-export const getProgramAccounts = async (programId: PublicKey) => {
-  try {
-    const accounts = await connection.getProgramAccounts(programId);
-    return accounts;
-  } catch (error) {
-    console.error('Error getting program accounts:', error);
-    return [];
-  }
-};
-
-// Airdrop for Development
-export const requestAirdrop = async (
-  publicKey: PublicKey,
-  amount: number = 1
-): Promise<string> => {
-  try {
-    if (SOLANA_NETWORK !== 'devnet' && SOLANA_NETWORK !== 'testnet') {
-      throw new Error('Airdrop only available on devnet/testnet');
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
+    } catch {
+      document.body.removeChild(textArea);
+      return false;
     }
-    
-    const signature = await connection.requestAirdrop(
-      publicKey,
-      amount * LAMPORTS_PER_SOL
-    );
-    
-    await confirmTransaction(signature);
-    return signature;
-  } catch (error) {
-    console.error('Error requesting airdrop:', error);
-    throw error;
-  }
-};
-
-// Fee Calculation
-export const estimateTransactionFee = async (transaction: Transaction): Promise<number> => {
-  try {
-    const feeCalculator = await connection.getFeeForMessage(transaction.compileMessage());
-    return feeCalculator?.value || 5000; // fallback fee
-  } catch (error) {
-    console.error('Error estimating transaction fee:', error);
-    return 5000; // fallback fee in lamports
-  }
-};
-
-// Utility for creating keypairs from private key
-export const createKeypairFromPrivateKey = (privateKeyString: string): Keypair => {
-  const privateKeyBytes = Uint8Array.from(
-    privateKeyString.split(',').map(num => parseInt(num.trim()))
-  );
-  return Keypair.fromSecretKey(privateKeyBytes);
-};
-
-// Constants for UI
-export const SOLANA_EXPLORER_URL = 
-  SOLANA_NETWORK === 'mainnet-beta' 
-    ? 'https://explorer.solana.com' 
-    : `https://explorer.solana.com?cluster=${SOLANA_NETWORK}`;
-
-export const getExplorerUrl = (signature: string, type: 'tx' | 'address' = 'tx'): string => {
-  return `${SOLANA_EXPLORER_URL}/${type}/${signature}`;
-};
-
-// Error Handling
-export class SolanaError extends Error {
-  constructor(message: string, public code?: string) {
-    super(message);
-    this.name = 'SolanaError';
   }
 }
 
-export const handleSolanaError = (error: any): string => {
-  if (error instanceof SolanaError) {
-    return error.message;
-  }
+// Islamic date utilities
+export function formatHijriDate(date: Date): string {
+  // This is a simplified implementation
+  // In a real app, you'd use a proper Hijri calendar library
+  const hijriMonths = [
+    'Muharram', 'Safar', 'Rabi al-Awwal', 'Rabi al-Thani',
+    'Jumada al-Awwal', 'Jumada al-Thani', 'Rajab', 'Shaban',
+    'Ramadan', 'Shawwal', 'Dhu al-Qadah', 'Dhu al-Hijjah'
+  ];
   
-  if (error.message) {
-    // Common Solana error messages
-    if (error.message.includes('insufficient funds')) {
-      return 'Insufficient funds for transaction';
-    } else if (error.message.includes('Transaction was not confirmed')) {
-      return 'Transaction failed to confirm';
-    } else if (error.message.includes('Blockhash not found')) {
-      return 'Transaction expired, please try again';
-    }
-  }
+  // Approximate conversion (not astronomically accurate)
+  const gregorianYear = date.getFullYear();
+  const hijriYear = Math.floor((gregorianYear - 622) * 1.030684);
+  const monthIndex = date.getMonth();
   
-  return 'An unexpected error occurred';
-};
+  return `${date.getDate()} ${hijriMonths[monthIndex]} ${hijriYear} AH`;
+}
+
+// Prayer times utilities (simplified)
+export function formatPrayerTime(hour: number, minute: number): string {
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+  const displayMinute = minute.toString().padStart(2, '0');
+  return `${displayHour}:${displayMinute} ${period}`;
+}
+
+// Zakat calculation utilities
+export function calculateZakat(assets: number, threshold: number = 85): number {
+  // Nisab threshold is approximately 85 grams of gold
+  // Current gold price would need to be fetched from an API
+  const goldPricePerGram = 65; // USD, this should be dynamic
+  const nisabValue = threshold * goldPricePerGram;
+  
+  if (assets >= nisabValue) {
+    return assets * 0.025; // 2.5% Zakat rate
+  }
+  return 0;
+}
+
+// File size formatting
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Color utilities for Islamic themes
+export function getUrgencyColor(urgency: string): string {
+  switch (urgency.toLowerCase()) {
+    case 'critical':
+      return 'text-red-600 bg-red-50';
+    case 'high':
+      return 'text-orange-600 bg-orange-50';
+    case 'medium':
+      return 'text-yellow-600 bg-yellow-50';
+    case 'low':
+      return 'text-green-600 bg-green-50';
+    default:
+      return 'text-gray-600 bg-gray-50';
+  }
+}
+
+export function getStatusColor(status: string): string {
+  switch (status.toLowerCase()) {
+    case 'approved':
+    case 'completed':
+    case 'active':
+      return 'text-green-600 bg-green-50';
+    case 'pending':
+    case 'under_review':
+      return 'text-yellow-600 bg-yellow-50';
+    case 'rejected':
+    case 'cancelled':
+      return 'text-red-600 bg-red-50';
+    case 'draft':
+      return 'text-gray-600 bg-gray-50';
+    default:
+      return 'text-blue-600 bg-blue-50';
+  }
+}
